@@ -18,7 +18,10 @@ class Settings(BaseSettings):
     # Groq LLM
     groq_api_key: str = ""
     groq_model: str = "llama-3.1-8b-instant"
-    groq_vision_model: str = "llama-3.2-11b-vision-preview"
+    # Current Groq multimodal model. The old llama-3.2 vision *preview* IDs were
+    # decommissioned; scout is the supported vision model (qwen/qwen3.6-27b is an
+    # alternative). Override via GROQ_VISION_MODEL if Groq rotates it again.
+    groq_vision_model: str = "meta-llama/llama-4-scout-17b-16e-instruct"
 
     # Gemini embeddings
     gemini_api_key: str = ""
