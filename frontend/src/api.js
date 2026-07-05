@@ -32,6 +32,8 @@ export const api = {
   // auth
   register: (b) => request("/api/auth/register", { method: "POST", body: b }),
   login: (b) => request("/api/auth/login", { method: "POST", body: b }),
+  firebaseAuth: (id_token, role) =>
+    request("/api/auth/firebase", { method: "POST", body: { id_token, role } }),
   me: () => request("/api/auth/me"),
   updateProfile: (b) => request("/api/auth/me", { method: "PUT", body: b }),
   health: () => request("/api/health"),
@@ -46,6 +48,7 @@ export const api = {
     request(`/api/news${location ? `?location=${encodeURIComponent(location)}` : ""}`),
   // marketplace
   listings: (q = "") => request(`/api/marketplace/listings${q}`),
+  marketFeed: () => request("/api/marketplace/feed"),
   createListing: (b) =>
     request("/api/marketplace/listings", { method: "POST", body: b }),
   myListings: () => request("/api/marketplace/my-listings"),

@@ -30,3 +30,18 @@ def get_current_user(
     if not user:
         raise credentials_error
     return user
+
+
+def require_roles(*roles: str):
+    """Dependency factory: allow only users whose role is in `roles`."""
+
+    def _dep(current: User = Depends(get_current_user)) -> User:
+        if roles and current.role not in roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"This action is only available to: {', '.join(roles)}. "
+                f"Your role is '{current.role}'.",
+            )
+        return current
+
+    return _dep

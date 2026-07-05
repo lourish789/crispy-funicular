@@ -37,6 +37,13 @@ class Settings(BaseSettings):
     news_api_key: str = ""
     news_cache_ttl_seconds: int = 1800
 
+    # Firebase Authentication (optional). Provide EITHER a path to a service
+    # account JSON via firebase_credentials_file, OR the raw JSON in
+    # firebase_credentials_json. project_id is used as a fallback verifier.
+    firebase_credentials_file: str = ""
+    firebase_credentials_json: str = ""
+    firebase_project_id: str = ""
+
     # CORS
     frontend_origin: str = "http://localhost:5173"
 
@@ -47,6 +54,14 @@ class Settings(BaseSettings):
     @property
     def gemini_enabled(self) -> bool:
         return bool(self.gemini_api_key)
+
+    @property
+    def firebase_enabled(self) -> bool:
+        return bool(
+            self.firebase_credentials_file
+            or self.firebase_credentials_json
+            or self.firebase_project_id
+        )
 
 
 @lru_cache

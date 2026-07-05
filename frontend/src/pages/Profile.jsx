@@ -6,6 +6,7 @@ export default function Profile() {
   const { user, setUser } = useAuth();
   const [form, setForm] = useState({
     full_name: user?.full_name || "",
+    role: user?.role || "farmer",
     location: user?.location || "",
     country: user?.country || "",
     farm_size_hectares: user?.farm_size_hectares || "",
@@ -45,6 +46,20 @@ export default function Profile() {
 
       <form className="card" onSubmit={save}>
         {saved && <div className="error-box" style={{ background: "#e7f6ec", color: "var(--green-700)" }}>✔ Profile saved.</div>}
+        <div className="field">
+          <label>Account role</label>
+          <div className="role-picker" style={{ maxWidth: 420 }}>
+            {[
+              { key: "farmer", icon: "🌾", title: "Farmer", sub: "Producer / seller" },
+              { key: "buyer", icon: "🛍️", title: "Buyer", sub: "Consumer / buyer" },
+            ].map((r) => (
+              <div key={r.key} className={"role-option" + (form.role === r.key ? " active" : "")} onClick={() => setForm({ ...form, role: r.key })}>
+                <span className="role-emoji">{r.icon}</span>
+                <div><div className="role-title">{r.title}</div><div className="role-sub">{r.sub}</div></div>
+              </div>
+            ))}
+          </div>
+        </div>
         <div className="grid cols-2">
           <div className="field"><label>Full name</label><input value={form.full_name} onChange={set("full_name")} /></div>
           <div className="field"><label>Location (city/state)</label><input value={form.location} onChange={set("location")} placeholder="Ibadan, Oyo" /></div>

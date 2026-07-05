@@ -14,10 +14,17 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str = Field(min_length=6)
+    role: str = "farmer"  # "farmer" (producer) | "buyer" (consumer)
+
+
+class FirebaseLoginRequest(BaseModel):
+    id_token: str
+    role: str = "farmer"  # applied only when creating a new linked account
 
 
 class ProfileUpdate(BaseModel):
     full_name: str | None = None
+    role: str | None = None
     location: str | None = None
     country: str | None = None
     farm_size_hectares: float | None = None
@@ -32,6 +39,7 @@ class ProfileUpdate(BaseModel):
 class UserOut(UserBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
+    role: str = "farmer"
     location: str | None = None
     country: str | None = None
     farm_size_hectares: float | None = None
@@ -140,6 +148,7 @@ class CommentOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     author_name: str
+    author_role: str = "farmer"
     body: str
     created_at: dt.datetime
 
@@ -152,6 +161,8 @@ class PostOut(BaseModel):
     topic: str
     likes: int
     author_id: int
+    author_name: str = ""
+    author_role: str = "farmer"
     created_at: dt.datetime
     comments: list[CommentOut] = []
 

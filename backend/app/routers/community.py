@@ -26,7 +26,12 @@ def create_post(
     current: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    post = Post(author_id=current.id, **payload.model_dump())
+    post = Post(
+        author_id=current.id,
+        author_name=current.full_name,
+        author_role=current.role,
+        **payload.model_dump(),
+    )
     db.add(post)
     db.commit()
     db.refresh(post)
@@ -55,6 +60,7 @@ def add_comment(
         post_id=post_id,
         author_id=current.id,
         author_name=current.full_name,
+        author_role=current.role,
         body=payload.body,
     )
     db.add(comment)

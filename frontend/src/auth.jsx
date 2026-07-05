@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { api, setToken, getToken } from "./api.js";
+import { googleSignIn } from "./firebase.js";
 
 const AuthContext = createContext(null);
 
@@ -26,8 +27,16 @@ export function AuthProvider({ children }) {
     return data.user;
   }
 
-  async function register(full_name, email, password) {
-    const data = await api.register({ full_name, email, password });
+  async function register(full_name, email, password, role = "farmer") {
+    const data = await api.register({ full_name, email, password, role });
+    setToken(data.access_token);
+    setUser(data.user);
+    return data.user;
+  }
+
+  async function firebaseLogin(role = "farmer") {
+    const idToken = await googleSignIn();
+    const data = await api.firebaseAuth(idToken, role);
     setToken(data.access_token);
     setUser(data.user);
     return data.user;
@@ -46,7 +55,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, register, logout, refresh, setUser }}
+      value={{ user, loading, login, register, firebaseLogin, logout, refresh, setUser }}
     >
       {children}
     </AuthContext.Provider>

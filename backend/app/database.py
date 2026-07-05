@@ -46,6 +46,15 @@ def _run_lightweight_migrations() -> None:
 
     additions = {
         "diagnoses": [("subject", "VARCHAR(20) DEFAULT 'plant'")],
+        "users": [
+            ("role", "VARCHAR(20) DEFAULT 'farmer'"),
+            ("firebase_uid", "VARCHAR(128)"),
+        ],
+        "posts": [
+            ("author_name", "VARCHAR(255) DEFAULT ''"),
+            ("author_role", "VARCHAR(20) DEFAULT 'farmer'"),
+        ],
+        "comments": [("author_role", "VARCHAR(20) DEFAULT 'farmer'")],
     }
     with engine.begin() as conn:
         for table, columns in additions.items():

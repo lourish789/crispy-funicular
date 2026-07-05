@@ -6,10 +6,17 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies import get_current_user
-from app.models import Listing, User
+from app.models import ROLE_BUYER, ROLE_FARMER, Listing, User
 from app.schemas import ListingCreate, ListingOut
 
 router = APIRouter(prefix="/api/marketplace", tags=["marketplace"])
+
+# Which listing_type each role publishes:
+#   farmer (producer) -> "sell" offers (produce, tools, inputs for sale)
+#   buyer  (consumer) -> "buy"  requests ("wanted" ads)
+ROLE_LISTING_TYPE = {ROLE_FARMER: "sell", ROLE_BUYER: "buy"}
+# The complementary feed each role wants to see (connect buyers <-> sellers):
+ROLE_FEED_TYPE = {ROLE_FARMER: "buy", ROLE_BUYER: "sell"}
 
 
 @router.get("/listings", response_model=list[ListingOut])
@@ -31,13 +38,35 @@ def list_listings(
     return q.order_by(Listing.created_at.desc()).limit(limit).all()
 
 
+@router.get("/feed", response_model=list[ListingOut])
+def role_feed(
+    current: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    limit: int = Query(50, le=100),
+):
+    """Role-synced feed: buyers see produce for sale, farmers see buyer requests."""
+    wanted = ROLE_FEED_TYPE.get(current.role, "sell")
+    return (
+        db.query(Listing)
+        .filter(Listing.status == "active", Listing.listing_type == wanted)
+        .order_by(Listing.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+
+
 @router.post("/listings", response_model=ListingOut, status_code=201)
 def create_listing(
     payload: ListingCreate,
     current: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    listing = Listing(seller_id=current.id, **payload.model_dump())
+    data = payload.model_dump()
+    # The listing_type is derived from the user's role so producers publish
+    # "sell" offers and consumers publish "buy" requests — keeping the two
+    # sides of the marketplace cleanly in sync.
+    data["listing_type"] = ROLE_LISTING_TYPE.get(current.role, "sell")
+    listing = Listing(seller_id=current.id, **data)
     if not listing.location:
         listing.location = current.location
     db.add(listing)

@@ -23,14 +23,33 @@ def _utcnow() -> dt.datetime:
     return dt.datetime.now(dt.timezone.utc)
 
 
+# User roles
+ROLE_FARMER = "farmer"  # producer / seller
+ROLE_BUYER = "buyer"  # consumer / buyer
+VALID_ROLES = {ROLE_FARMER, ROLE_BUYER}
+
+
+def normalize_role(role: str | None) -> str:
+    r = (role or "").strip().lower()
+    if r in {"buyer", "consumer", "buy"}:
+        return ROLE_BUYER
+    return ROLE_FARMER  # default: producer/farmer
+
+
 class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     full_name: Mapped[str] = mapped_column(String(255))
-    hashed_password: Mapped[str] = mapped_column(String(255))
+    hashed_password: Mapped[str] = mapped_column(String(255), default="")
     created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=_utcnow)
+
+    # Role: "farmer" (producer/seller) or "buyer" (consumer). Drives which
+    # marketplace actions and feeds a user sees.
+    role: Mapped[str] = mapped_column(String(20), default="farmer", index=True)
+    # Set when the account was created/linked via Firebase auth.
+    firebase_uid: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
 
     # Farm profile / personalization metadata
     location: Mapped[str | None] = mapped_column(String(255), nullable=True)
@@ -123,6 +142,8 @@ class Post(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     author_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    author_name: Mapped[str] = mapped_column(String(255), default="")
+    author_role: Mapped[str] = mapped_column(String(20), default="farmer")
     title: Mapped[str] = mapped_column(String(255))
     body: Mapped[str] = mapped_column(Text)
     topic: Mapped[str] = mapped_column(String(80), index=True, default="general")
@@ -142,6 +163,7 @@ class Comment(Base):
     post_id: Mapped[int] = mapped_column(ForeignKey("posts.id"), index=True)
     author_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     author_name: Mapped[str] = mapped_column(String(255))
+    author_role: Mapped[str] = mapped_column(String(20), default="farmer")
     body: Mapped[str] = mapped_column(Text)
     created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=_utcnow)
 

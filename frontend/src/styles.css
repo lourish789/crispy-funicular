@@ -176,6 +176,22 @@ ul.clean li:before { content: "✔"; color: var(--green-600); font-weight: 800; 
 .modal-backdrop { position: fixed; inset: 0; background: rgba(15,40,23,0.5); display: grid; place-items: center; padding: 20px; z-index: 50; }
 .modal { background: #fff; border-radius: var(--radius); padding: 26px; width: 100%; max-width: 480px; box-shadow: var(--shadow); }
 
+/* ---------- Roles & Firebase ---------- */
+.role-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.role-option { display: flex; gap: 10px; align-items: center; padding: 12px; border: 1.5px solid var(--line); border-radius: 12px; cursor: pointer; transition: 0.15s; }
+.role-option:hover { border-color: var(--green-300); }
+.role-option.active { border-color: var(--green-600); background: var(--green-50); box-shadow: 0 0 0 3px var(--green-50); }
+.role-emoji { font-size: 24px; }
+.role-title { font-weight: 700; font-size: 14px; }
+.role-sub { font-size: 12px; color: var(--muted); }
+.role-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+.role-badge.farmer { background: var(--green-50); color: var(--green-700); }
+.role-badge.buyer { background: #eaf2fb; color: #2f6bb0; }
+.divider { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 12px; margin: 16px 0; }
+.divider:before, .divider:after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.btn.google { width: 100%; background: #fff; color: #333; border: 1.5px solid var(--line); }
+.btn.google:hover { background: #f7f7f7; }
+
 .spinner { width: 18px; height: 18px; border: 2.5px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 

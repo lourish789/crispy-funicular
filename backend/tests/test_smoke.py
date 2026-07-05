@@ -33,10 +33,15 @@ finally:
 client = TestClient(app)
 
 
-def _auth_headers(email="farmer@example.com"):
+def _auth_headers(email="farmer@example.com", role="farmer"):
     r = client.post(
         "/api/auth/register",
-        json={"email": email, "full_name": "Test Farmer", "password": "secret123"},
+        json={
+            "email": email,
+            "full_name": "Test Farmer",
+            "password": "secret123",
+            "role": role,
+        },
     )
     if r.status_code == 400:  # already registered
         r = client.post("/api/auth/login", json={"email": email, "password": "secret123"})
@@ -119,6 +124,74 @@ def test_open_source_cv_model():
     assert body["detector"] == "open-source-cv"
     assert body["model"] and "mobilenet" in body["model"].lower()
     assert isinstance(body["prevention_strategies"], list) and body["prevention_strategies"]
+
+
+def test_roles_and_marketplace_sync():
+    # A farmer's listing becomes a "sell" offer regardless of payload type.
+    farmer_h, _ = _auth_headers("producer@example.com", role="farmer")
+    me = client.get("/api/auth/me", headers=farmer_h).json()
+    assert me["role"] == "farmer"
+    r = client.post(
+        "/api/marketplace/listings",
+        headers=farmer_h,
+        json={"title": "Yams", "description": "Fresh yam tubers", "category": "produce",
+              "listing_type": "buy", "price": 10, "unit": "bag"},
+    )
+    assert r.status_code == 201 and r.json()["listing_type"] == "sell"
+
+    # A buyer's listing becomes a "buy" request.
+    buyer_h, _ = _auth_headers("consumer@example.com", role="buyer")
+    assert client.get("/api/auth/me", headers=buyer_h).json()["role"] == "buyer"
+    br = client.post(
+        "/api/marketplace/listings",
+        headers=buyer_h,
+        json={"title": "Wanted: maize", "description": "Need 500kg", "category": "produce",
+              "price": 5, "unit": "bag"},
+    )
+    assert br.status_code == 201 and br.json()["listing_type"] == "buy"
+
+    # Role-synced feed: the buyer sees the farmer's sell offer.
+    feed = client.get("/api/marketplace/feed", headers=buyer_h).json()
+    assert any(li["listing_type"] == "sell" for li in feed)
+    # The farmer sees the buyer's request.
+    ffeed = client.get("/api/marketplace/feed", headers=farmer_h).json()
+    assert any(li["listing_type"] == "buy" for li in ffeed)
+
+
+def test_community_shows_author_role():
+    headers, _ = _auth_headers("consumer@example.com", role="buyer")
+    r = client.post(
+        "/api/community/posts",
+        headers=headers,
+        json={"title": "Where to buy organic?", "body": "Looking for suppliers", "topic": "market"},
+    )
+    assert r.status_code == 201
+    body = r.json()
+    assert body["author_role"] == "buyer"
+    assert body["author_name"]
+
+
+def test_firebase_login_mocked(monkeypatch):
+    from app.services import firebase_service
+
+    monkeypatch.setattr(firebase_service, "enabled", lambda: True)
+    monkeypatch.setattr(
+        firebase_service,
+        "verify_id_token",
+        lambda tok: {"uid": "fb-uid-123", "email": "fbuser@example.com", "name": "FB User"},
+    )
+    r = client.post(
+        "/api/auth/firebase", json={"id_token": "fake-token", "role": "buyer"}
+    )
+    assert r.status_code == 200, r.text
+    data = r.json()
+    assert data["user"]["email"] == "fbuser@example.com"
+    assert data["user"]["role"] == "buyer"
+    assert data["access_token"]
+    # unconfigured -> 503
+    monkeypatch.setattr(firebase_service, "enabled", lambda: False)
+    r2 = client.post("/api/auth/firebase", json={"id_token": "x", "role": "farmer"})
+    assert r2.status_code == 503
 
 
 def test_advisory():

@@ -15,7 +15,9 @@ const DEFAULT_IMG = "https://images.unsplash.com/photo-1607921090707-c2f6c3f2d1c
 
 export default function Marketplace() {
   const { user } = useAuth();
+  const isFarmer = user?.role !== "buyer";
   const [listings, setListings] = useState([]);
+  const [feed, setFeed] = useState([]);
   const [cat, setCat] = useState("all");
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -25,6 +27,7 @@ export default function Marketplace() {
     if (cat !== "all") parts.push(`category=${cat}`);
     if (search) parts.push(`search=${encodeURIComponent(search)}`);
     api.listings(parts.length ? `?${parts.join("&")}` : "").then(setListings).catch(() => {});
+    api.marketFeed().then(setFeed).catch(() => {});
   }
   useEffect(load, [cat]);
 
@@ -33,10 +36,39 @@ export default function Marketplace() {
       <div className="page-head row spread">
         <div>
           <h1>🛒 Agribusiness Marketplace</h1>
-          <p>Connect with buyers and sellers of produce, tools, fertilizers and more.</p>
+          <p>{isFarmer
+            ? "Sell your produce & inputs, and see what buyers are looking for."
+            : "Discover produce & inputs for sale, and post what you're looking to buy."}</p>
         </div>
-        <button className="btn primary" onClick={() => setShowModal(true)}>+ New listing</button>
+        <button className="btn primary" onClick={() => setShowModal(true)}>
+          {isFarmer ? "+ Sell something" : "+ Post a request"}
+        </button>
       </div>
+
+      {feed.length > 0 && (
+        <div style={{ marginBottom: 26 }}>
+          <h2 style={{ fontSize: 18, marginBottom: 12 }}>
+            {isFarmer ? "🔔 Buyers looking for produce" : "🌱 Fresh from farmers"}
+          </h2>
+          <div className="grid cols-3">
+            {feed.slice(0, 3).map((l) => (
+              <div key={l.id} className="card listing-card">
+                <div className="row spread">
+                  <span className={"pill" + (l.listing_type === "buy" ? " amber" : "")}>
+                    {l.listing_type === "buy" ? "Wanted" : l.category}
+                  </span>
+                </div>
+                <h3 style={{ margin: "8px 0 4px" }}>{l.title}</h3>
+                <p className="muted" style={{ fontSize: 13.5, margin: "0 0 8px" }}>{l.description.slice(0, 90)}</p>
+                <div className="row spread">
+                  <span className="listing-price">{l.currency} {l.price}<span className="muted" style={{ fontSize: 13, fontWeight: 400 }}>/{l.unit}</span></span>
+                  <span className="muted" style={{ fontSize: 12 }}>📍 {l.location || "—"}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="row" style={{ marginBottom: 14 }}>
         <input placeholder="Search listings…" value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === "Enter" && load()} style={{ maxWidth: 320 }} />
@@ -76,14 +108,14 @@ export default function Marketplace() {
         </div>
       )}
 
-      {showModal && <ListingModal onClose={() => setShowModal(false)} onCreated={() => { setShowModal(false); load(); }} />}
+      {showModal && <ListingModal isFarmer={isFarmer} onClose={() => setShowModal(false)} onCreated={() => { setShowModal(false); load(); }} />}
     </div>
   );
 }
 
-function ListingModal({ onClose, onCreated }) {
+function ListingModal({ isFarmer, onClose, onCreated }) {
   const [form, setForm] = useState({
-    title: "", description: "", category: "produce", listing_type: "sell",
+    title: "", description: "", category: "produce",
     price: "", currency: "USD", unit: "kg", quantity: 1, location: "", image_url: "",
   });
   const [error, setError] = useState("");
@@ -103,18 +135,20 @@ function ListingModal({ onClose, onCreated }) {
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <form className="modal" onClick={(e) => e.stopPropagation()} onSubmit={submit}>
-        <h2 style={{ fontSize: 22 }}>Create a listing</h2>
+        <h2 style={{ fontSize: 22 }}>{isFarmer ? "Sell a product" : "Post a buy request"}</h2>
+        <p className="muted" style={{ marginTop: 0, fontSize: 13 }}>
+          {isFarmer
+            ? "Listed as a sell offer visible to buyers."
+            : "Listed as a wanted request visible to farmers."}
+        </p>
         {error && <div className="error-box">{error}</div>}
-        <div className="field"><label>Title</label><input value={form.title} onChange={set("title")} required placeholder="Fresh organic tomatoes" /></div>
+        <div className="field"><label>Title</label><input value={form.title} onChange={set("title")} required placeholder={isFarmer ? "Fresh organic tomatoes" : "Looking for 500kg maize"} /></div>
         <div className="field"><label>Description</label><textarea rows={3} value={form.description} onChange={set("description")} required /></div>
         <div className="row">
           <div className="field" style={{ flex: 1 }}><label>Category</label>
             <select value={form.category} onChange={set("category")}>
               {CATEGORIES.filter((c) => c !== "all").map((c) => <option key={c}>{c}</option>)}
             </select>
-          </div>
-          <div className="field" style={{ flex: 1 }}><label>Type</label>
-            <select value={form.listing_type} onChange={set("listing_type")}><option value="sell">Selling</option><option value="buy">Buying</option></select>
           </div>
         </div>
         <div className="row">

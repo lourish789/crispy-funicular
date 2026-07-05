@@ -55,7 +55,17 @@ function PostCard({ post, onChange }) {
   return (
     <div className="card post">
       <div className="row spread">
-        <span className="pill">{post.topic}</span>
+        <div className="row" style={{ gap: 8 }}>
+          <span className="pill">{post.topic}</span>
+          {post.author_name && (
+            <span className="muted" style={{ fontSize: 12.5 }}>
+              by <strong>{post.author_name}</strong>{" "}
+              <span className={"role-badge " + (post.author_role || "farmer")}>
+                {post.author_role === "buyer" ? "🛍️ Buyer" : "🌾 Farmer"}
+              </span>
+            </span>
+          )}
+        </div>
         <span className="muted" style={{ fontSize: 12 }}>{new Date(post.created_at).toLocaleDateString()}</span>
       </div>
       <div className="post-title" style={{ marginTop: 8 }}>{post.title}</div>
@@ -67,7 +77,12 @@ function PostCard({ post, onChange }) {
       {open && (
         <div style={{ marginTop: 12 }}>
           {post.comments?.map((c) => (
-            <div key={c.id} className="comment"><strong>{c.author_name}</strong> · {c.body}</div>
+            <div key={c.id} className="comment">
+              <strong>{c.author_name}</strong>{" "}
+              <span className={"role-badge " + (c.author_role || "farmer")}>
+                {c.author_role === "buyer" ? "🛍️" : "🌾"}
+              </span> · {c.body}
+            </div>
           ))}
           <div className="row" style={{ marginTop: 10 }}>
             <input value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Write a comment…" onKeyDown={(e) => e.key === "Enter" && addComment()} />

@@ -41,7 +41,11 @@ export default function Navbar() {
           <span className="avatar">{(user?.full_name || "U")[0].toUpperCase()}</span>
           <div className="profile-meta">
             <div className="profile-name">{user?.full_name}</div>
-            <div className="profile-loc">{user?.location || "Set your farm"}</div>
+            <div className="profile-loc">
+              <span className={"role-badge " + (user?.role || "farmer")}>
+                {user?.role === "buyer" ? "🛍️ Buyer" : "🌾 Farmer"}
+              </span>
+            </div>
           </div>
         </NavLink>
         <button
