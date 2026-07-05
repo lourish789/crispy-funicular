@@ -17,7 +17,7 @@ from app.routers import (
     marketplace,
     news,
 )
-from app.services import rag_service
+from app.services import cv_model_service, rag_service
 
 
 @asynccontextmanager
@@ -67,4 +67,5 @@ def health():
         if settings.gemini_enabled
         else "local-fallback",
         "news": "configured" if settings.news_api_key else "demo",
+        "local_cv": cv_model_service.status(),
     }

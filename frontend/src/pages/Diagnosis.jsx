@@ -4,6 +4,7 @@ import { api } from "../api.js";
 export default function Diagnosis() {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState("");
+  const [subject, setSubject] = useState("plant");
   const [cropHint, setCropHint] = useState("");
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -28,6 +29,7 @@ export default function Diagnosis() {
     try {
       const form = new FormData();
       form.append("file", file);
+      form.append("subject", subject);
       if (cropHint) form.append("crop_hint", cropHint);
       const res = await api.diagnose(form);
       setResult(res);
@@ -41,12 +43,17 @@ export default function Diagnosis() {
   return (
     <div>
       <div className="page-head">
-        <h1>🔬 Plant Disease Diagnosis</h1>
-        <p>Upload an image or a short video of the affected plant. Our AI vision system samples frames, analyses symptoms, and returns a treatment plan.</p>
+        <h1>🔬 Plant & Animal Disease Diagnosis</h1>
+        <p>Upload an image or a short video. An open-source computer-vision model detects the disease locally, then our AI expands it into a treatment plan.</p>
       </div>
 
       <div className="grid cols-2">
         <div className="card">
+          <label>What are you diagnosing?</label>
+          <div className="tag-row" style={{ marginBottom: 18 }}>
+            <div className={"tag" + (subject === "plant" ? " active" : "")} onClick={() => setSubject("plant")}>🌿 Plant / Crop</div>
+            <div className={"tag" + (subject === "animal" ? " active" : "")} onClick={() => setSubject("animal")}>🐄 Animal / Livestock</div>
+          </div>
           <div
             className="dropzone"
             onClick={() => inputRef.current.click()}
@@ -62,8 +69,8 @@ export default function Diagnosis() {
           {file && !preview && <p className="muted">🎬 {file.name} (video ready for frame sampling)</p>}
 
           <div className="field" style={{ marginTop: 16 }}>
-            <label>Crop (optional — improves accuracy)</label>
-            <input value={cropHint} onChange={(e) => setCropHint(e.target.value)} placeholder="e.g. tomato, maize, cassava" />
+            <label>{subject === "animal" ? "Animal (optional)" : "Crop (optional — improves accuracy)"}</label>
+            <input value={cropHint} onChange={(e) => setCropHint(e.target.value)} placeholder={subject === "animal" ? "e.g. cattle, goat, poultry" : "e.g. tomato, maize, cassava"} />
           </div>
           {error && <div className="error-box">{error}</div>}
           <button className="btn primary" style={{ width: "100%" }} disabled={!file || busy} onClick={submit}>
@@ -79,8 +86,16 @@ export default function Diagnosis() {
             </div>
           ) : (
             <div>
-              <span className="pill">Diagnosis</span>
+              <div className="row" style={{ gap: 8 }}>
+                <span className="pill">Diagnosis</span>
+                {result.detector === "open-source-cv" && (
+                  <span className="pill amber">🧠 Open-source CV</span>
+                )}
+              </div>
               <h2 style={{ marginTop: 10 }}>{result.disease_name}</h2>
+              {result.model && (
+                <p className="muted" style={{ fontSize: 12, margin: "-6px 0 4px" }}>model: {result.model}</p>
+              )}
               <div className="row" style={{ margin: "6px 0 14px" }}>
                 <div style={{ flex: 1 }}>
                   <div className="confidence-bar"><div className="confidence-fill" style={{ width: `${Math.round(result.confidence * 100)}%` }} /></div>

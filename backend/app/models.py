@@ -78,6 +78,7 @@ class Diagnosis(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     media_type: Mapped[str] = mapped_column(String(20))  # image | video
+    subject: Mapped[str] = mapped_column(String(20), default="plant")  # plant | animal
     crop_hint: Mapped[str | None] = mapped_column(String(120), nullable=True)
     disease_name: Mapped[str] = mapped_column(String(255))
     confidence: Mapped[float] = mapped_column(Float, default=0.0)

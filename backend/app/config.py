@@ -23,6 +23,12 @@ class Settings(BaseSettings):
     # alternative). Override via GROQ_VISION_MODEL if Groq rotates it again.
     groq_vision_model: str = "meta-llama/llama-4-scout-17b-16e-instruct"
 
+    # Open-source local CV disease classifiers (Hugging Face image-classification)
+    cv_local_enabled: bool = True
+    cv_use_gpu: bool = False
+    plant_disease_model: str = "linkanjarad/mobilenet_v2_1.0_224-plant-disease-identification"
+    animal_disease_model: str = "SrimathiE21ALR044/Cattle_Skin_Disease"
+
     # Gemini embeddings
     gemini_api_key: str = ""
     gemini_embedding_model: str = "models/text-embedding-004"

@@ -14,7 +14,7 @@ expert** that knows your farm.
 
 | # | Feature | What it does |
 |---|---------|--------------|
-| 1 | **🔬 AI Plant-Disease Diagnosis** | Upload an **image or video**; frames are sampled with OpenCV, symptoms are analysed, and the AI vision model returns structured JSON: `disease_name`, `cause`, `immediate_solution`, `prevention_strategies`, and a confidence score. |
+| 1 | **🔬 AI Plant & Animal Disease Diagnosis** | Upload an **image or video** of a **plant or animal**; frames are sampled with OpenCV and an **open-source local computer-vision model** classifies the disease on-device (no API key). The detected label is then enriched by the LLM into structured JSON: `disease_name`, `cause`, `immediate_solution`, `prevention_strategies`, confidence, and the detector/model used. |
 | 2 | **🧭 Personalized Farm Advisory** | A data-driven engine blends your profile + historical activity (diagnoses, listings) with an LLM to tell you how to **expand**, **optimize**, **improve**, and what to **give up** on. |
 | 3 | **📰 Real-Time Agri-News** | Fetches global + hyper-localized agricultural news for your location, with efficient **TTL caching**. |
 | 4 | **🛒 Agribusiness Marketplace** | B2B/B2C listings for produce, tools, fertilizers, seeds, livestock & machinery — search, filter, buy/sell. |
@@ -23,10 +23,26 @@ expert** that knows your farm.
 
 ### AI architecture
 
+- **Disease detection (primary):** open-source **Hugging Face `image-classification`** models running locally — no API key:
+  - Plant/crop → `linkanjarad/mobilenet_v2_1.0_224-plant-disease-identification` (MobileNetV2, 38 PlantVillage classes)
+  - Animal/livestock → `SrimathiE21ALR044/Cattle_Skin_Disease` (ViT)
+  - both configurable via `PLANT_DISEASE_MODEL` / `ANIMAL_DISEASE_MODEL`.
+- **Diagnosis enrichment:** the detected label is expanded into cause / solution / prevention by the LLM, with an offline keyword knowledge base fallback.
 - **LLM / text generation:** Groq `llama-3.1-8b-instant` (low latency).
-- **Vision diagnosis:** Groq vision model, with a color-analysis heuristic fallback.
+- **Vision fallback:** Groq multimodal model, then a color-analysis heuristic.
 - **Embeddings / RAG:** Google Gemini Embedding API **exclusively** for vectorization and semantic search.
-- **Graceful degradation:** every AI call has a deterministic offline fallback, so the platform never crashes when a key is missing or an API fails.
+- **Graceful degradation:** every stage has a deterministic offline fallback, so the platform never crashes when a key is missing, a model isn't downloaded, or an API fails.
+
+**Detection order:** open-source local CV model → Groq vision → text reasoning over color metrics → rule-based heuristic.
+
+To enable the local CV models:
+
+```bash
+cd backend
+pip install -r requirements-cv.txt   # torch + transformers (~200MB+); model downloads on first use
+```
+
+Without them, diagnosis still works via the vision-LLM / heuristic fallback.
 
 ---
 

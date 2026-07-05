@@ -31,3 +31,28 @@ def init_db() -> None:
     from app import models  # noqa: F401  (ensure models are imported)
 
     Base.metadata.create_all(bind=engine)
+    _run_lightweight_migrations()
+
+
+def _run_lightweight_migrations() -> None:
+    """Additive, idempotent column migrations for SQLite dev databases.
+
+    create_all() never adds columns to pre-existing tables, so newly introduced
+    columns are patched in here to avoid breaking older local databases.
+    """
+    if not settings.database_url.startswith("sqlite"):
+        return
+    from sqlalchemy import text
+
+    additions = {
+        "diagnoses": [("subject", "VARCHAR(20) DEFAULT 'plant'")],
+    }
+    with engine.begin() as conn:
+        for table, columns in additions.items():
+            existing = {
+                row[1]
+                for row in conn.execute(text(f"PRAGMA table_info({table})")).fetchall()
+            }
+            for name, ddl in columns:
+                if name not in existing:
+                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}"))

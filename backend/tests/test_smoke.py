@@ -92,6 +92,35 @@ def test_diagnosis_image():
     assert h.status_code == 200 and len(h.json()) >= 1
 
 
+def test_open_source_cv_model():
+    """When torch/transformers are installed, the local CV model is the detector."""
+    import pytest
+
+    from app.services import cv_model_service
+
+    if not cv_model_service.deps_installed():
+        pytest.skip("CV deps (torch/transformers) not installed")
+
+    headers, _ = _auth_headers()
+    arr = np.zeros((224, 224, 3), dtype=np.uint8)
+    arr[..., 1] = 90
+    arr[40:180, 40:180] = [120, 70, 35]
+    buf = io.BytesIO()
+    Image.fromarray(arr).save(buf, format="JPEG")
+    buf.seek(0)
+    r = client.post(
+        "/api/diagnosis",
+        headers=headers,
+        files={"file": ("leaf.jpg", buf, "image/jpeg")},
+        data={"subject": "plant"},
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["detector"] == "open-source-cv"
+    assert body["model"] and "mobilenet" in body["model"].lower()
+    assert isinstance(body["prevention_strategies"], list) and body["prevention_strategies"]
+
+
 def test_advisory():
     headers, _ = _auth_headers()
     r = client.get("/api/advisory", headers=headers)

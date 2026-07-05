@@ -21,6 +21,7 @@ MAX_BYTES = 25 * 1024 * 1024  # 25 MB
 async def create_diagnosis(
     file: UploadFile = File(...),
     crop_hint: str | None = Form(None),
+    subject: str = Form("plant"),
     current: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -30,14 +31,16 @@ async def create_diagnosis(
     if len(data) > MAX_BYTES:
         raise HTTPException(status_code=413, detail="File too large (max 25MB)")
 
+    subject = "animal" if subject.lower().startswith("anim") else "plant"
     content_type = (file.content_type or "").lower()
     media_type = "video" if content_type.startswith("video") else "image"
 
-    result = vision_service.diagnose(data, media_type, crop_hint)
+    result = vision_service.diagnose(data, media_type, crop_hint, subject)
 
     record = Diagnosis(
         user_id=current.id,
         media_type=media_type,
+        subject=subject,
         crop_hint=crop_hint,
         disease_name=result["disease_name"],
         confidence=result["confidence"],
@@ -66,6 +69,7 @@ def history(
         DiagnosisOut(
             id=r.id,
             media_type=r.media_type,
+            subject=r.subject or "plant",
             crop_hint=r.crop_hint,
             disease_name=r.disease_name,
             cause=r.cause,

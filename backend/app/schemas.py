@@ -62,12 +62,15 @@ class DiagnosisResult(BaseModel):
     immediate_solution: str
     prevention_strategies: list[str]
     confidence: float = 0.0
+    detector: str | None = None  # open-source-cv | groq-vision | heuristic
+    model: str | None = None
 
 
 class DiagnosisOut(DiagnosisResult):
     model_config = ConfigDict(from_attributes=True)
     id: int
     media_type: str
+    subject: str = "plant"
     crop_hint: str | None = None
     created_at: dt.datetime
 

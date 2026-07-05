@@ -1,0 +1,13 @@
+# ===== Optional: Open-source local computer-vision disease detection =====
+# Install these to enable on-device plant/animal disease classification
+# (no API key required). They are heavy (~200MB+), so they are kept separate
+# from the base requirements. The app auto-detects availability and falls back
+# gracefully to the vision-LLM / heuristic pipeline when they are absent.
+#
+#   pip install -r requirements-cv.txt
+#
+# CPU-only PyTorch is fine for inference. For GPU, install the CUDA build of
+# torch per https://pytorch.org and set CV_USE_GPU=true.
+
+torch==2.3.1
+transformers==4.42.4
