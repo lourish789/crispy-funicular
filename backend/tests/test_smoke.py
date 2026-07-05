@@ -193,6 +193,14 @@ def test_firebase_login_mocked(monkeypatch):
     r2 = client.post("/api/auth/firebase", json={"id_token": "x", "role": "farmer"})
     assert r2.status_code == 503
 
+    # A federated user (no local password) attempting password login must get a
+    # clean 401, not a 500 from an unidentifiable empty hash.
+    login = client.post(
+        "/api/auth/login",
+        json={"email": "fbuser@example.com", "password": "whatever"},
+    )
+    assert login.status_code == 401
+
 
 def test_advisory():
     headers, _ = _auth_headers()

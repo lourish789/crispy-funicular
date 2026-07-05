@@ -16,7 +16,15 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    # Federated (e.g. Firebase) accounts have no local password hash. Guard
+    # against empty/malformed hashes so a password-login attempt on such an
+    # account fails cleanly (401) instead of raising (500).
+    if not hashed:
+        return False
+    try:
+        return pwd_context.verify(plain, hashed)
+    except Exception:
+        return False
 
 
 def create_access_token(subject: str) -> str:
