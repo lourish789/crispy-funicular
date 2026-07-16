@@ -922,7 +922,7 @@ contact = [
     ("Role", "Full-Stack Software Engineer and AI Architect"),
     ("Project", "AgriTech Suite"),
     ("Email", "flourisholaiya@gmail.com"),
-    ("Portfolio", "[Insert portfolio website URL]"),
+    ("Portfolio", "https://flourish-webpage.vercel.app/"),
     ("Repository", "github.com/lourish789/crispy-funicular"),
     ("Document version", "1.0 — July 2026"),
 ]
